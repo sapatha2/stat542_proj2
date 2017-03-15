@@ -11,37 +11,11 @@ simple_pred <- function(){
     year=2012
   }
   
-  # Loop over all test cases with the correct month and year (lazy coding)
-  # for(store in 1:45){
-  #   for(dept in test[test$Store==store,]$Dept){
-  #     tmp=test[test$Store==store & test$Dept==dept & month==as.numeric(format(test$Date,"%m")) & year==as.numeric(format(test$Date,"%Y")),]
-  #     print(nrow(tmp))
-  #     if(month>3){
-  #       tmp1=train[train$Store==store & train$Dept==dept & month-1==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #       tmp2=train[train$Store==store & train$Dept==dept & month-2==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #       tmp3=train[train$Store==store & train$Dept==dept & month-3==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #     }else if(month==3){
-  #       tmp1=train[train$Store==store & train$Dept==dept & month-1==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),"Weekly_Sales"]
-  #       tmp2=train[train$Store==store & train$Dept==dept & month-2==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),"Weekly_Sales"]
-  #       tmp3=train[train$Store==store & train$Dept==dept & 12==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),"Weekly_Sales"]
-  #     }else if(month==2){
-  #       tmp1=train[train$Store==store & train$Dept==dept & month-1==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #       tmp2=train[train$Store==store & train$Dept==dept & 12==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #       tmp3=train[train$Store==store & train$Dept==dept & 11==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #     }else{
-  #       tmp1=train[train$Store==store & train$Dept==dept & 12==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #       tmp2=train[train$Store==store & train$Dept==dept & 11==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #       tmp3=train[train$Store==store & train$Dept==dept & 10==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]$Weekly_Sales
-  #     }
-  #     print(store)
-  #     print(dept)
-  #     print("MIH1")
-  #     tmp$Weekly_Pred1=(mean(tmp1)+mean(tmp2)+mean(tmp3))/3.0
-  #     test[test$Store==store & test$Dept==dept & month==as.numeric(format(test$Date,"%m")) & year==as.numeric(format(test$Date,"%Y")),]<<-tmp
-  #     print("MIH2")
-  #   }
-  # }
+  # Average over the previous three months of data
   tmp=test[month==as.numeric(format(test$Date,"%m")) & year==as.numeric(format(test$Date,"%Y")),]
+  tmp1=0
+  tmp2=0
+  tmp3=0
   if(month>3){
     tmp1=train[month-1==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
     tmp2=train[month-2==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
@@ -59,8 +33,29 @@ simple_pred <- function(){
     tmp2=train[11==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
     tmp3=train[10==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
   }
-  # Currently averaging over all departments and stores, leads to error of 15378.16
-  # Make it so that doesn't happen!
-  tmp$Weekly_Pred1=(mean(tmp1$Weekly_Sales)+mean(tmp2$Weekly_Sales)+mean(tmp3$Weekly_Sales))/3.0
+  
+  # Previously I averaged over all departments, lead to a huge error! ~20000
+  # Now I don't average over the departments/stores, reduces the error to ~5000
+  for(dept in 1:99){
+    if(sum(tmp$Dept==dept)!=0){
+      one=mean(tmp1[tmp1$Dept==dept,"Weekly_Sales"])
+      two=mean(tmp2[tmp2$Dept==dept,"Weekly_Sales"])
+      three=mean(tmp3[tmp3$Dept==dept,"Weekly_Sales"])
+      d=0
+      if(!is.na(one)){
+        tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]+one
+        d=d+1
+      }
+      if(!is.na(two)){
+        tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]+two
+        d=d+1
+      }
+      if(!is.na(three)){
+        tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]+three
+        d=d+1
+      }
+      tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]/3.0
+    }
+  }
   test[month==as.numeric(format(test$Date,"%m")) & year==as.numeric(format(test$Date,"%Y")),]<<-tmp
 }

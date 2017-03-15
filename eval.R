@@ -1,11 +1,10 @@
 # Evaluation script for this project
-rm(list=ls())
 train=read.csv("train.csv")
 test=read.csv("test.csv")
 
 source("mymain.R") 
 
-for(t in 1:1){
+for(t in 1:20){
   
   # predict the weekly sales for month t, 
   # e.g., month 1 --> 2011-03, and month 20 --> 2012-10. 
@@ -39,9 +38,7 @@ for(t in 1:1){
     }
   }
   E1=E1/d1
-  #MSE2=mean((tmp$Weekly_Pred2-newtest$Weekly_Sales)^2)
-  #MSE2=mean((tmp$Weekly_Pred2-newtest$Weekly_Sales)^2)
-  print(E1) #Old: 15378.16, New (all sep):, Last (avg over stores): 
+  print(E1) #Old: 15378.16, New (all sep): 
 }
 
 
