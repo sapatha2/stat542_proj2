@@ -1,61 +1,37 @@
 # Simple prediction
 
-# Just say that test[store,dept,y/m/*]={average over the last three months at that store/dept}
 simple_pred <- function(){
-  # Find the month and year we want to predict for
-  if(t+2<=12){
-    month=t+2
-    year=2011
-  }else{
-    month=(t+2)-12
-    year=2012
-  }
-  
-  # Average over the previous three months of data
-  tmp=test[month==as.numeric(format(test$Date,"%m")) & year==as.numeric(format(test$Date,"%Y")),]
-  tmp1=0
-  tmp2=0
-  tmp3=0
-  if(month>3){
-    tmp1=train[month-1==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
-    tmp2=train[month-2==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
-    tmp3=train[month-3==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
-  }else if(month==3){
-    tmp1=train[month-1==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
-    tmp2=train[month-2==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
-    tmp3=train[12==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
-  }else if(month==2){
-    tmp1=train[month-1==as.numeric(format(train$Date,"%m")) & year==as.numeric(format(train$Date,"%Y")),]
-    tmp2=train[12==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
-    tmp3=train[11==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
-  }else{
-    tmp1=train[12==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
-    tmp2=train[11==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
-    tmp3=train[10==as.numeric(format(train$Date,"%m")) & year-1==as.numeric(format(train$Date,"%Y")),]
-  }
-  
-  # Previously I averaged over all departments, lead to a huge error! ~20000
-  # Now I don't average over the departments/stores, reduces the error to ~5000
-  for(dept in 1:99){
-    if(sum(tmp$Dept==dept)!=0){
-      one=mean(tmp1[tmp1$Dept==dept,"Weekly_Sales"])
-      two=mean(tmp2[tmp2$Dept==dept,"Weekly_Sales"])
-      three=mean(tmp3[tmp3$Dept==dept,"Weekly_Sales"])
-      d=0
-      if(!is.na(one)){
-        tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]+one
-        d=d+1
+  ## create a new column of predicted sales in the test set
+  test$Weekly_Pred1 <<- NA
+  store = sort(unique(test$Store))
+  n.store = length(store)
+  dept = sort(unique(test$Dept))
+  n.dept = length(dept)
+
+  for (s in 1:n.store){
+    for (d in 1:n.dept){
+
+      #cat("Store: ", store[s], "\t Dept ", dept[d], "\n")
+
+      # find the data for (store, dept) = (s, d)
+      test.id = which(test$Store == store[s] & test$Dept == dept[d])
+      test.temp = test[test.id, ]
+      train.id = which(train$Store == store[s] & train$Dept == dept[d])
+      train.temp = train[train.id, ]
+      
+      for (i in 1:length(test.id)){
+        id = which(train.temp$Wk == test.temp[i,]$Wk & train.temp$Yr == test.temp[i,]$Yr - 1)
+        threeWeeksId = c(id - 1, id, id + 1)  ## three weeks in the last year
+        tempSales = train.temp[threeWeeksId, 'Weekly_Sales']
+        if (length(tempSales) == 0){
+          test$Weekly_Pred1[test.id[i]] <<- 0
+        }else{
+          test$Weekly_Pred1[test.id[i]] <<- median(tempSales)
+        }
       }
-      if(!is.na(two)){
-        tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]+two
-        d=d+1
-      }
-      if(!is.na(three)){
-        tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]+three
-        d=d+1
-      }
-      tmp[tmp$Dept==dept,"Weekly_Pred1"]=tmp[tmp$Dept==dept,"Weekly_Pred1"]/3.0
     }
   }
-  test[month==as.numeric(format(test$Date,"%m")) & year==as.numeric(format(test$Date,"%Y")),]<<-tmp
+
+  # still 5 NA's, for simplicity use 0.
+  test$Weekly_Pred1[which(is.na(test$Weekly_Pred1))] <<- 0
 }

@@ -1,13 +1,15 @@
 # Evaluation script for this project
+rm(list=ls())
 train=read.csv("train.csv")
 test=read.csv("test.csv")
 
 source("mymain.R") 
 
+month=3
+year=2011
+
 for(t in 1:20){
-  
   # predict the weekly sales for month t, 
-  # e.g., month 1 --> 2011-03, and month 20 --> 2012-10. 
   predict();
   
   # newtest: sales data for this month; taking the
@@ -15,30 +17,30 @@ for(t in 1:20){
   tmp.filename = paste('xxx', t, '.csv', sep='');
   newtest=read.csv(tmp.filename)
   
-  # Evaluate your prediction accuracy for this month
-  if(t+2<=12){
-    month=t+2
-    year=2011
-  }else{
-    month=(t+2)-12
-    year=2012
-  }
+  # Evaluate prediction accuracy p/month
+  i=test[test$Mon==month & test$Yr == year, "IsHoliday"]
+  Y.pred1=test[test$Mon==month & test$Yr == year, "Weekly_Pred1"]
+  Y.pred2=test[test$Mon==month & test$Yr == year, "Weekly_Pred2"]
+  Y.pred3=test[test$Mon==month & test$Yr == year, "Weekly_Pred3"]
+  Y=newtest$Weekly_Sales
   
-  # Loop over all test cases with the correct month and year (lazy coding)
-  tmp=test[month==as.numeric(format(test$Date,"%m")) & year==as.numeric(format(test$Date,"%Y")),]
-  E1=0
-  d1=0
-  for(i in nrow(tmp)){
-    if(newtest$IsHoliday[i]){
-      E1=E1+abs(tmp$Weekly_Pred1[i]-newtest$Weekly_Sales[i])*5
-      d1=d1+5
-    }else{
-      E1=E1+abs(tmp$Weekly_Pred1[i]-newtest$Weekly_Sales[i])
-      d1=d1+1
-    }
+  E1=sum(abs(Y.pred1-Y)[i])*5+sum(abs(Y.pred1-Y)[!i])
+  E2=sum(abs(Y.pred2-Y)[i])*5+sum(abs(Y.pred2-Y)[!i])
+  E3=sum(abs(Y.pred3-Y)[i])*5+sum(abs(Y.pred3-Y)[!i])
+  d=sum(i)*5+sum(!i)
+  print(E1/d)
+  print(E2/d)
+  print(E3/d)
+  
+  if(month==12){
+    month=1
+    year=2012
+  }else{
+    month=month+1
   }
-  E1=E1/d1
-  print(E1) #Old: 15378.16, New (all sep): 
 }
+
+
+
 
 
