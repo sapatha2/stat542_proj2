@@ -2,7 +2,7 @@
 
 simple_pred <- function(){
   ## create a new column of predicted sales in the test set
-  test$Weekly_Pred1 <<- NA
+  test$Weekly_Pred1 <<- 0
   store = sort(unique(test$Store))
   n.store = length(store)
   dept = sort(unique(test$Dept))
@@ -11,7 +11,7 @@ simple_pred <- function(){
   for (s in 1:n.store){
     for (d in 1:n.dept){
 
-      #cat("Store: ", store[s], "\t Dept ", dept[d], "\n")
+      cat("Simple, Store: ", store[s], "\t Dept ", dept[d], "\n")
 
       # find the data for (store, dept) = (s, d)
       test.id = which(test$Store == store[s] & test$Dept == dept[d])

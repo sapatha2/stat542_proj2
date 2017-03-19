@@ -8,7 +8,7 @@ source("mymain.R")
 month=3
 year=2011
 
-for(t in 1:20){
+for(t in 1:1){
   # predict the weekly sales for month t, 
   predict();
   
@@ -31,13 +31,6 @@ for(t in 1:20){
   print(E1/d)
   print(E2/d)
   print(E3/d)
-  
-  if(month==12){
-    month=1
-    year=2012
-  }else{
-    month=month+1
-  }
 }
 
 
